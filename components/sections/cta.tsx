@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { ArrowRight, Gamepad2 } from 'lucide-react'
 import { serverConfig } from '@/lib/config'
 import { BorderBeamCard } from '@/components/ui/animated-card'
+import { WaveSeparator } from '@/components/sections/wave-separator'
 import { cn } from '@/lib/utils'
 
 export function CTA() {
@@ -14,7 +15,9 @@ export function CTA() {
   }, [])
 
   return (
-    <section className="py-20 md:py-28 overflow-hidden relative">
+    <>
+      <WaveSeparator />
+      <section className="py-20 md:py-28 overflow-hidden relative">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/20 rounded-full blur-3xl opacity-20" />
       </div>
@@ -53,10 +56,13 @@ export function CTA() {
                 </p>
               </div>
 
-              <div className={cn(
-                'transition-all duration-700 delay-[400ms]',
-                mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-              )}>
+              <div 
+                className={cn(
+                  'transition-all duration-700',
+                  mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                )}
+                style={{ transitionDelay: '400ms' }}
+              >
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <a
                     href={serverConfig.fivem.connectUrl}
@@ -81,5 +87,7 @@ export function CTA() {
         </div>
       </div>
     </section>
+    <WaveSeparator flip />
+    </>
   )
 }

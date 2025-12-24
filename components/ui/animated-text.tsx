@@ -135,3 +135,23 @@ export function Typewriter({ text, className, speed = 50, delay = 0 }: Typewrite
     </motion.span>
   )
 }
+
+interface ShimmerTextProps {
+  text: string
+  className?: string
+}
+
+export function ShimmerText({ text, className }: ShimmerTextProps) {
+  return (
+    <span
+      className={cn(
+        'relative inline-block bg-clip-text text-transparent bg-gradient-to-r',
+        'from-foreground via-primary to-foreground bg-[length:200%_auto]',
+        'animate-shimmer-text',
+        className
+      )}
+    >
+      {text}
+    </span>
+  )
+}

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Sora } from 'next/font/google'
 import './globals.css'
+import { ToastProvider } from '@/components/providers/toast-provider'
+import { SmoothScrollProvider } from '@/components/providers/smooth-scroll-provider'
 
 const sora = Sora({
   subsets: ['latin'],
@@ -19,7 +21,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={sora.variable}>
-      <body>{children}</body>
+      <body suppressHydrationWarning>
+        <SmoothScrollProvider>
+          {children}
+          <ToastProvider />
+        </SmoothScrollProvider>
+      </body>
     </html>
   )
 }

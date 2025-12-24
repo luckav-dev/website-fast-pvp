@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Swords, Shield, Trophy, Zap, Target, Users } from 'lucide-react'
-import { SpotlightCard } from '@/components/ui/animated-card'
+import { SpotlightCard, TiltCard, BorderBeamCard } from '@/components/ui/animated-card'
+import { useScrollReveal } from '@/hooks/use-scroll-reveal'
 import { cn } from '@/lib/utils'
 
 const features = [
@@ -58,13 +59,14 @@ const features = [
 
 export function Features() {
   const [mounted, setMounted] = useState(false)
+  const { ref, isVisible } = useScrollReveal({ threshold: 0.1 })
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   return (
-    <section className="py-20 md:py-28">
+    <section ref={ref} className="py-20 md:py-28">
       <div className="container-wide">
         <div className={cn(
           'text-center mb-12 md:mb-16 transition-all duration-700',
@@ -91,18 +93,31 @@ export function Features() {
               )}
               style={{ transitionDelay: `${200 + i * 100}ms` }}
             >
-              <SpotlightCard className={cn('h-full transition-colors', feature.borderColor)}>
-                <div className="p-6">
-                  <div className={cn(
-                    'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
-                    feature.bgColor
+              <TiltCard rotationFactor={8}>
+                <div className="relative group">
+                  <BorderBeamCard duration={5} className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute inset-[1px] rounded-xl bg-card/80 backdrop-blur-sm" />
+                  </BorderBeamCard>
+                  <SpotlightCard className={cn(
+                    'h-full transition-all duration-300',
+                    'bg-card/60 backdrop-blur-md border',
+                    feature.borderColor,
+                    'group-hover:bg-card/80 group-hover:border-primary/40'
                   )}>
-                    <feature.icon className={cn('w-6 h-6', feature.color)} />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
+                    <div className="p-6 relative z-10">
+                      <div className={cn(
+                        'w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300',
+                        feature.bgColor,
+                        'group-hover:scale-110 group-hover:rotate-6'
+                      )}>
+                        <feature.icon className={cn('w-6 h-6 transition-transform duration-300 group-hover:scale-110', feature.color)} />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">{feature.title}</h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
+                    </div>
+                  </SpotlightCard>
                 </div>
-              </SpotlightCard>
+              </TiltCard>
             </div>
           ))}
         </div>

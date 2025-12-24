@@ -1,47 +1,71 @@
 import { NextResponse } from 'next/server'
-
-const FIVEM_IP = '127.0.0.1'
-const FIVEM_PORT = '30120'
+import { serverConfig } from '@/lib/config'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
+  const { ip, port } = serverConfig.fivem
+  const baseUrl = `http://${ip}:${port}`
+  
   try {
-    const [playersRes, infoRes] = await Promise.all([
-      fetch(`http://${FIVEM_IP}:${FIVEM_PORT}/players.json`, {
-        cache: 'no-store',
-        signal: AbortSignal.timeout(5000),
-      }),
-      fetch(`http://${FIVEM_IP}:${FIVEM_PORT}/info.json`, {
-        cache: 'no-store',
-        signal: AbortSignal.timeout(5000),
-      }),
-    ])
+    const infoRes = await fetch(`${baseUrl}/info.json`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
+    })
 
-    if (!playersRes.ok || !infoRes.ok) {
-      throw new Error('Server not responding')
+    if (!infoRes.ok) {
+      throw new Error('Server not responding - info.json failed')
     }
 
-    const players = await playersRes.json()
     const info = await infoRes.json()
-
     const maxPlayers = parseInt(info.vars?.sv_maxClients || '64')
 
-    return NextResponse.json({
-      online: true,
-      players: {
-        online: players.length,
-        max: maxPlayers,
-        list: players.map((p: { id: number; name: string; ping: number; identifiers?: string[] }) => ({
-          id: p.id,
-          name: p.name,
-          ping: p.ping,
-          identifiers: p.identifiers || [],
-        })),
-      },
-      serverName: info.vars?.sv_projectName || 'FastPVP',
-    })
+    try {
+      const playersRes = await fetch(`${baseUrl}/players.json`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      })
+
+      if (playersRes.ok) {
+        const players = await playersRes.json()
+        
+        return NextResponse.json({
+          online: true,
+          players: {
+            online: Array.isArray(players) ? players.length : 0,
+            max: maxPlayers,
+            list: Array.isArray(players) ? players.map((p: { id: number; name: string; ping: number; identifiers?: string[] }) => ({
+              id: p.id,
+              name: p.name,
+              ping: p.ping,
+              identifiers: p.identifiers || [],
+            })) : [],
+          },
+          serverName: info.vars?.sv_projectName || 'FastPVP',
+        })
+      } else {
+        return NextResponse.json({
+          online: true,
+          players: {
+            online: 0,
+            max: maxPlayers,
+            list: [],
+          },
+          serverName: info.vars?.sv_projectName || 'FastPVP',
+        })
+      }
+    } catch {
+      return NextResponse.json({
+        online: true,
+        players: {
+          online: 0,
+          max: maxPlayers,
+          list: [],
+        },
+        serverName: info.vars?.sv_projectName || 'FastPVP',
+      })
+    }
   } catch {
     return NextResponse.json({
       online: false,
