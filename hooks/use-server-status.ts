@@ -16,7 +16,7 @@ const INITIAL: ServerStatus = {
   players: { online: 0, max: serverConfig.fivem.maxPlayers },
 }
 
-export function useServerStatus(interval = 15000) {
+export function useServerStatus(interval = 5000) { // Reduced to 5 seconds for faster updates
   const [status, setStatus] = useState<ServerStatus>(INITIAL)
   const [loading, setLoading] = useState(true)
   const isMountedRef = useRef(true)
@@ -28,13 +28,19 @@ export function useServerStatus(interval = 15000) {
     try {
       // Add cache busting to prevent stale data
       const timestamp = Date.now()
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+      
       const res = await fetch(`/api/server-stats?t=${timestamp}`, {
         cache: 'no-store',
+        signal: controller.signal,
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
         },
       })
+      
+      clearTimeout(timeoutId)
       
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`)
@@ -56,7 +62,10 @@ export function useServerStatus(interval = 15000) {
         setLoading(false)
       }
     } catch (error) {
-      console.warn('Failed to fetch server status:', error)
+      // Only log if it's not an abort error (timeout)
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.warn('Failed to fetch server status:', error)
+      }
       // Don't update status on error - keep previous state
       // Only set loading to false after first attempt
       if (loading) {
@@ -68,10 +77,10 @@ export function useServerStatus(interval = 15000) {
   useEffect(() => {
     isMountedRef.current = true
     
-    // Initial fetch
+    // Initial fetch immediately
     fetch_status()
     
-    // Set up interval
+    // Set up interval with reduced time
     const id = setInterval(() => {
       if (isMountedRef.current) {
         fetch_status()

@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss'
-const svgToDataUri = require('mini-svg-data-uri')
-const { default: flattenColorPalette } = require('tailwindcss/lib/util/flattenColorPalette')
+import svgToDataUri from 'mini-svg-data-uri'
+import flattenColorPalette from 'tailwindcss/lib/util/flattenColorPalette'
+import tailwindcssAnimate from 'tailwindcss-animate'
 
 const config: Config = {
   darkMode: 'class',
@@ -143,7 +144,7 @@ const config: Config = {
     },
   },
   plugins: [
-    require('tailwindcss-animate'),
+    tailwindcssAnimate,
     addVariablesForColors,
     function ({ matchUtilities, theme }: { matchUtilities: Function; theme: Function }) {
       matchUtilities(

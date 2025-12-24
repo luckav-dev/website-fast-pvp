@@ -1,0 +1,18 @@
+{
+  "name": "FastPVP - Servidor FiveM PVP",
+  "short_name": "FastPVP",
+  "description": "El servidor PVP más competitivo de FiveM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030303",
+  "theme_color": "#fc043c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
+

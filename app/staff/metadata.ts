@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import { generateMetadata as genMeta } from '@/lib/seo'
-import { StaffPageClient } from './staff-client'
 
 export const metadata: Metadata = genMeta({
   title: 'Equipo Staff',
@@ -9,6 +8,3 @@ export const metadata: Metadata = genMeta({
   canonical: '/staff',
 })
 
-export default function StaffPage() {
-  return <StaffPageClient />
-}

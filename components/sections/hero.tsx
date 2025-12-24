@@ -15,7 +15,7 @@ import { useParallax } from '@/hooks/use-parallax'
 import { toast } from 'sonner'
 
 export function Hero() {
-  const { status } = useServerStatus()
+  const { status, loading: statusLoading } = useServerStatus(5000) // 5 second updates
   const [copied, setCopied] = useState(false)
   const [mounted, setMounted] = useState(false)
   const ip = `${serverConfig.fivem.ip}:${serverConfig.fivem.port}`
@@ -169,7 +169,7 @@ export function Hero() {
                 </span>
                 <Users className="w-3.5 h-3.5 text-muted-foreground" />
                 <span className="font-medium">
-                  {status.online ? `${status.players.online}/${status.players.max}` : 'Offline'}
+                  {statusLoading ? 'Cargando...' : status.online ? `${status.players.online}/${status.players.max}` : 'Offline'}
                 </span>
               </Link>
 

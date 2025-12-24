@@ -4,12 +4,13 @@ import { serverConfig } from '@/lib/config'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// Helper function to fetch with retry
-async function fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<Response> {
+// Helper function to fetch with fast timeout and single retry
+async function fetchFast(url: string, options: RequestInit, retries = 1): Promise<Response> {
   for (let i = 0; i <= retries; i++) {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 seconds timeout
+      // Reduced timeout to 2 seconds for faster response
+      const timeoutId = setTimeout(() => controller.abort(), 2000)
       
       const response = await fetch(url, {
         ...options,
@@ -28,14 +29,14 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2): P
         return response
       }
       
-      // If not the last retry, wait a bit before retrying
+      // If not the last retry, wait briefly before retrying
       if (i < retries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+        await new Promise(resolve => setTimeout(resolve, 300)) // Reduced wait time
       }
     } catch (error) {
-      // If not the last retry, wait before retrying
+      // If not the last retry, wait briefly before retrying
       if (i < retries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+        await new Promise(resolve => setTimeout(resolve, 300))
         continue
       }
       throw error
@@ -50,17 +51,23 @@ export async function GET() {
   const baseUrl = `http://${ip}:${port}`
   
   try {
-    // Try to fetch info.json with retry
+    // Fetch info.json first to check if server is online (fast timeout)
     let infoRes: Response
     try {
-      infoRes = await fetchWithRetry(`${baseUrl}/info.json`, {})
+      infoRes = await fetchFast(`${baseUrl}/info.json`, {})
     } catch (error) {
-      console.error('Failed to fetch info.json after retries:', error)
+      // Server is offline - return immediately
       return NextResponse.json({
         online: false,
         players: { online: 0, max: 64, list: [] },
         serverName: 'FastPVP',
-      }, { status: 200 })
+      }, { 
+        status: 200,
+        headers: { 
+          'Cache-Control': 'no-store, max-age=0',
+          'X-Response-Time': Date.now().toString()
+        }
+      })
     }
 
     if (!infoRes.ok) {
@@ -68,18 +75,27 @@ export async function GET() {
         online: false,
         players: { online: 0, max: 64, list: [] },
         serverName: 'FastPVP',
-      }, { status: 200 })
+      }, { 
+        status: 200,
+        headers: { 'Cache-Control': 'no-store, max-age=0' }
+      })
     }
 
     const info = await infoRes.json()
     const maxPlayers = parseInt(info.vars?.sv_maxClients || '64')
 
-    // Try to fetch players.json with retry, but don't fail if it doesn't work
+    // Fetch players.json with timeout (don't wait too long)
     let players: any[] = []
     let playersOnline = 0
     
+    // Use Promise.race to get players quickly, but don't block on it
     try {
-      const playersRes = await fetchWithRetry(`${baseUrl}/players.json`, {})
+      const playersRes = await Promise.race([
+        fetchFast(`${baseUrl}/players.json`, {}),
+        new Promise<Response>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 1500)
+        )
+      ]) as Response
       
       if (playersRes.ok) {
         const playersData = await playersRes.json()
@@ -89,8 +105,8 @@ export async function GET() {
         }
       }
     } catch (error) {
-      // If players.json fails, server is still online but with 0 players
-      console.warn('Could not fetch players.json, assuming 0 players:', error)
+      // If players.json fails or times out, server is still online but with 0 players
+      // Don't log to avoid spam
     }
 
     return NextResponse.json({
@@ -106,6 +122,8 @@ export async function GET() {
         })),
       },
       serverName: info.vars?.sv_projectName || 'FastPVP',
+    }, {
+      headers: { 'Cache-Control': 'no-store, max-age=0' }
     })
   } catch (error) {
     console.error('Server status error:', error)
@@ -113,6 +131,9 @@ export async function GET() {
       online: false,
       players: { online: 0, max: 64, list: [] },
       serverName: 'FastPVP',
-    }, { status: 200 })
+    }, { 
+      status: 200,
+      headers: { 'Cache-Control': 'no-store, max-age=0' }
+    })
   }
 }

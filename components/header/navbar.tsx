@@ -80,6 +80,7 @@ export function Navbar() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               className={cn(
                 'relative px-3.5 py-1.5 text-sm font-medium rounded-full transition-all duration-200',
                 pathname === item.href 
