@@ -29,7 +29,7 @@ export function Stats() {
       borderColor: 'border-green-500/20',
       showMax: true,
       showProgress: true,
-      badge: status.players.online > status.players.max * 0.8 ? 'hot' : status.players.online > 0 ? 'success' : undefined
+      badge: (status.players.online > status.players.max * 0.8 ? 'hot' : status.players.online > 0 ? 'success' : undefined) as 'hot' | 'success' | undefined
     },
     { 
       icon: Gamepad2, 
@@ -102,7 +102,9 @@ export function Stats() {
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <p className="text-muted-foreground text-sm font-medium">{stat.label}</p>
                     {stat.badge && (
-                      <Badge variant={stat.badge} className="text-xs" />
+                      <Badge variant={stat.badge} className="text-xs">
+                        {stat.badge === 'hot' ? 'Hot' : stat.badge === 'success' ? 'Activo' : stat.badge === 'new' ? 'Nuevo' : ''}
+                      </Badge>
                     )}
                   </div>
                   {stat.showProgress && (
