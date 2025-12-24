@@ -29,14 +29,33 @@ export default function PlayersPage() {
   const fetchPlayers = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/server-stats')
+      // Add cache busting to prevent stale data
+      const timestamp = Date.now()
+      const res = await fetch(`/api/server-stats?t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      })
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      
       const newData = await res.json()
-      setData(newData)
-      setLastUpdate(new Date())
-    } catch {
-      setData({ online: false, players: { online: 0, max: 64, list: [] } })
+      
+      // Only update if we got valid data
+      if (newData && typeof newData.online === 'boolean') {
+        setData(newData)
+        setLastUpdate(new Date())
+      }
+    } catch (error) {
+      console.warn('Failed to fetch players:', error)
+      // Don't update data on error - keep previous state
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {

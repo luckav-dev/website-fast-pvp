@@ -57,7 +57,7 @@ export function Hero() {
         <div className="text-center max-w-3xl mx-auto">
           <div
             className={cn(
-              'transition-all duration-700 ease-out',
+            'transition-all duration-700 ease-out',
               mounted && 'opacity-100 scale-100'
             )}
             style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
@@ -125,8 +125,8 @@ export function Hero() {
                 className="relative inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 text-sm font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/50 transition-all overflow-hidden group"
               >
                 <span className="relative z-10 flex items-center gap-2">
-                  Jugar Ahora
-                  <ArrowRight className="w-4 h-4" />
+                Jugar Ahora
+                <ArrowRight className="w-4 h-4" />
                 </span>
               </a>
 
@@ -158,7 +158,7 @@ export function Hero() {
                 <span className="relative flex h-2 w-2">
                   {status.online && (
                     <>
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                       <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-50" />
                     </>
                   )}

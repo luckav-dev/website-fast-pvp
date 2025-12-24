@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { serverConfig } from '@/lib/config'
 
 export interface ServerStatus {
@@ -16,31 +16,76 @@ const INITIAL: ServerStatus = {
   players: { online: 0, max: serverConfig.fivem.maxPlayers },
 }
 
-export function useServerStatus(interval = 30000) {
+export function useServerStatus(interval = 15000) {
   const [status, setStatus] = useState<ServerStatus>(INITIAL)
+  const [loading, setLoading] = useState(true)
+  const isMountedRef = useRef(true)
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const fetch_status = useCallback(async () => {
+    if (!isMountedRef.current) return
+    
     try {
-      const res = await fetch('/api/server-stats')
-      if (!res.ok) throw new Error()
-      const data = await res.json()
-      setStatus({
-        online: data.online,
-        players: {
-          online: data.players?.online || 0,
-          max: data.players?.max || serverConfig.fivem.maxPlayers,
+      // Add cache busting to prevent stale data
+      const timestamp = Date.now()
+      const res = await fetch(`/api/server-stats?t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
         },
       })
-    } catch {
-      setStatus(prev => ({ ...prev, online: false }))
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      
+      const data = await res.json()
+      
+      if (!isMountedRef.current) return
+      
+      // Only update if we got valid data
+      if (data && typeof data.online === 'boolean') {
+        setStatus({
+          online: data.online,
+          players: {
+            online: data.players?.online || 0,
+            max: data.players?.max || serverConfig.fivem.maxPlayers,
+          },
+        })
+        setLoading(false)
+      }
+    } catch (error) {
+      console.warn('Failed to fetch server status:', error)
+      // Don't update status on error - keep previous state
+      // Only set loading to false after first attempt
+      if (loading) {
+        setLoading(false)
+      }
     }
-  }, [])
+  }, [loading])
 
   useEffect(() => {
+    isMountedRef.current = true
+    
+    // Initial fetch
     fetch_status()
-    const id = setInterval(fetch_status, interval)
-    return () => clearInterval(id)
+    
+    // Set up interval
+    const id = setInterval(() => {
+      if (isMountedRef.current) {
+        fetch_status()
+      }
+    }, interval)
+    
+    return () => {
+      isMountedRef.current = false
+      clearInterval(id)
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current)
+      }
+    }
   }, [fetch_status, interval])
 
-  return { status }
+  return { status, loading }
 }
